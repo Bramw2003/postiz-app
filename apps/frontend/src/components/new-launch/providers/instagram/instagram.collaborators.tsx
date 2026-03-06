@@ -10,6 +10,7 @@ import { Checkbox } from '@gitroom/react/form/checkbox';
 import { useSettings } from '@gitroom/frontend/components/launches/helpers/use.values';
 import { InstagramDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/instagram.dto';
 import { InstagramCollaboratorsTags } from '@gitroom/frontend/components/new-launch/providers/instagram/instagram.tags';
+import { InstagramLocation } from '@gitroom/frontend/components/new-launch/providers/instagram/instagram.location';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { InstagramPreview } from '@gitroom/frontend/components/new-launch/providers/instagram/instagram.preview';
 const postType = [
@@ -61,6 +62,15 @@ const InstagramCollaborators: FC<{
           label="Collaborators (max 3) - accounts can't be private"
           {...register('collaborators', {
             value: [],
+          })}
+        />
+      )}
+
+
+      {postCurrentType && (
+        <InstagramLocation
+          {...register('location_id', {
+            value: '',
           })}
         />
       )}

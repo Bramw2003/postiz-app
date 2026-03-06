@@ -570,9 +570,14 @@ export class InstagramProvider
               )}`
             : ``;
 
+        const locationId =
+          firstPost?.settings?.location_id
+            ? `&location_id=${encodeURIComponent(firstPost.settings.location_id)}`
+            : ``;
+
         const { id: photoId } = await (
           await this.fetch(
-            `https://${type}/v20.0/${id}/media?${mediaType}${isCarousel}${collaborators}${trialParams}&access_token=${accessToken}${caption}`,
+            `https://${type}/v20.0/${id}/media?${mediaType}${isCarousel}${collaborators}${locationId}${trialParams}&access_token=${accessToken}${caption}`,
             {
               method: 'POST',
             }
@@ -850,6 +855,22 @@ export class InstagramProvider
         data.q
       )}&access_token=${accessToken}`
     );
+  }
+
+  async locationSearch(accessToken: string, data: { q: string }) {
+    const response = await (
+      await this.fetch(
+        `https://graph.facebook.com/v20.0/search?type=place&q=${encodeURIComponent(
+          data.q
+        )}&fields=id,name,location&access_token=${accessToken}`
+      )
+    ).json();
+    return (response?.data || []).map((place: any) => ({
+      id: place.id,
+      name: [place.name, place.location?.city, place.location?.country]
+        .filter(Boolean)
+        .join(', '),
+    }));
   }
 
   async postAnalytics(

@@ -30,4 +30,8 @@ export class InstagramDto {
   @IsArray()
   @IsOptional()
   collaborators: Collaborators[];
+
+  @IsString()
+  @IsOptional()
+  location_id?: string;
 }
