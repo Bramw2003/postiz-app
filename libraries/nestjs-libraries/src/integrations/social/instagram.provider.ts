@@ -616,6 +616,8 @@ export class InstagramProvider
           (firstPost?.media?.length || 0) > 1 && !isStory
             ? `&is_carousel_item=true`
             : ``;
+        const isVideo = m.path.indexOf('.mp4') > -1;
+        const isCarouselItem = (firstPost?.media?.length || 0) > 1 && !isStory;
         const mediaType = hasExtension(m.path, 'mp4')
           ? firstPost?.media?.length === 1
             ? isStory
@@ -642,9 +644,22 @@ export class InstagramProvider
           : ``;
 
         const collaborators =
-          firstPost?.settings?.collaborators?.length && !isStory
+          firstPost?.settings?.collaborators?.length && !isStory && !isCarouselItem
             ? `&collaborators=${JSON.stringify(
-                firstPost?.settings?.collaborators.map((p) => p.label)
+                firstPost?.settings?.collaborators.map((p) => p.label.replace(/^@/, ''))
+              )}`
+            : ``;
+
+        const userTags =
+          firstPost?.settings?.user_tags?.length && !isVideo && !isStory && !isCarouselItem
+            ? `&user_tags=${encodeURIComponent(
+                JSON.stringify(
+                  firstPost.settings.user_tags.map((t: any) => ({
+                    username: t.label.replace(/^@/, ''),
+                    x: typeof t.x !== 'undefined' ? t.x : 0.5,
+                    y: typeof t.y !== 'undefined' ? t.y : 0.5,
+                  }))
+                )
               )}`
             : ``;
 
@@ -673,7 +688,7 @@ export class InstagramProvider
 
         const { id: photoId } = await (
           await this.fetch(
-            `https://${type}/v20.0/${id}/media?${mediaType}${isCarousel}${collaborators}${trialParams}${audioConfiguration}&access_token=${accessToken}${caption}`,
+            `https://${type}/v20.0/${id}/media?${mediaType}${isCarousel}${collaborators}${userTags}${trialParams}${audioConfiguration}&access_token=${accessToken}${caption}`,
             {
               method: 'POST',
             }

@@ -10,6 +10,7 @@ import { useT } from '@gitroom/react/translation/get.transation.service.client';
 export const InstagramCollaboratorsTags: FC<{
   name: string;
   label: string;
+  maxTags?: number;
   onChange: (event: {
     target: {
       value: any[];
@@ -17,7 +18,7 @@ export const InstagramCollaboratorsTags: FC<{
     };
   }) => void;
 }> = (props) => {
-  const { onChange, name, label } = props;
+  const { onChange, name, label, maxTags = 3 } = props;
   const { getValues } = useSettings();
   const { integration } = useIntegration();
   const [tagValue, setTagValue] = useState<any[]>([]);
@@ -35,11 +36,11 @@ export const InstagramCollaboratorsTags: FC<{
         },
       });
     },
-    [tagValue]
+    [tagValue, onChange, name]
   );
   const onAddition = useCallback(
     (newTag: any) => {
-      if (tagValue.length >= 3) {
+      if (tagValue.length >= maxTags) {
         return;
       }
       const modify = [...tagValue, newTag];
@@ -51,7 +52,7 @@ export const InstagramCollaboratorsTags: FC<{
         },
       });
     },
-    [tagValue]
+    [tagValue, maxTags, onChange, name]
   );
   useEffect(() => {
     const settings = getValues()[props.name];
