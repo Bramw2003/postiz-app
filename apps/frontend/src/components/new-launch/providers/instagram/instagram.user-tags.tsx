@@ -3,10 +3,8 @@
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { useSettings } from '@gitroom/frontend/components/launches/helpers/use.values';
 import { useIntegration } from '@gitroom/frontend/components/launches/helpers/use.integration';
-import { useCustomProviderFunction } from '@gitroom/frontend/components/launches/helpers/use.custom.provider.function';
 
 interface UserTagItem { label: string; x: number; y: number; }
-interface UserSuggestion { username: string; name: string; profilePic: string; }
 
 export const InstagramUserTags: FC<{
   name: string;
@@ -14,13 +12,9 @@ export const InstagramUserTags: FC<{
 }> = ({ name, onChange }) => {
   const { getValues } = useSettings();
   const { value: posts } = useIntegration();
-  const customFunc = useCustomProviderFunction();
   const [tags, setTags] = useState<UserTagItem[]>([]);
   const [pendingPos, setPendingPos] = useState<{ x: number; y: number } | null>(null);
   const [pendingName, setPendingName] = useState('');
-  const [suggestions, setSuggestions] = useState<UserSuggestion[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [activeIdx, setActiveIdx] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const images = posts[0]?.image || [];
@@ -41,31 +35,6 @@ export const InstagramUserTags: FC<{
     [name, onChange]
   );
 
-  // Debounced user search
-  useEffect(() => {
-    if (!pendingPos) return;
-    const q = pendingName.replace(/^@/, '');
-    if (q.length < 2) {
-      setSuggestions([]);
-      return;
-    }
-    setSearching(true);
-    const timer = setTimeout(async () => {
-      try {
-        const results = await customFunc.get('searchUsers', { q });
-        setSuggestions(Array.isArray(results) ? results : []);
-      } catch {
-        setSuggestions([]);
-      } finally {
-        setSearching(false);
-      }
-    }, 350);
-    return () => {
-      clearTimeout(timer);
-      setSearching(false);
-    };
-  }, [pendingName, pendingPos]);
-
   const handleImageClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (tags.length >= 20) return;
@@ -74,62 +43,33 @@ export const InstagramUserTags: FC<{
       const y = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height));
       setPendingPos({ x, y });
       setPendingName('');
-      setSuggestions([]);
-      setActiveIdx(-1);
       requestAnimationFrame(() => inputRef.current?.focus());
     },
     [tags.length]
   );
 
-  const confirmTag = useCallback(
-    (label: string) => {
-      if (!label.trim() || !pendingPos) return;
-      update([...tags, { label: label.trim().replace(/^@/, ''), x: pendingPos.x, y: pendingPos.y }]);
-      setPendingPos(null);
-      setPendingName('');
-      setSuggestions([]);
-      setActiveIdx(-1);
-    },
-    [pendingPos, tags, update]
-  );
+  const confirm = useCallback(() => {
+    if (!pendingName.trim() || !pendingPos) return;
+    update([
+      ...tags,
+      {
+        label: pendingName.trim().replace(/^@/, ''),
+        x: pendingPos.x,
+        y: pendingPos.y,
+      },
+    ]);
+    setPendingPos(null);
+    setPendingName('');
+  }, [pendingName, pendingPos, tags, update]);
 
   const cancel = useCallback(() => {
     setPendingPos(null);
     setPendingName('');
-    setSuggestions([]);
-    setActiveIdx(-1);
   }, []);
 
   const removeTag = useCallback(
     (i: number) => update(tags.filter((_, idx) => idx !== i)),
     [tags, update]
-  );
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setActiveIdx((i) => Math.min(i + 1, suggestions.length - 1));
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setActiveIdx((i) => Math.max(i - 1, -1));
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (activeIdx >= 0 && suggestions[activeIdx]) {
-          confirmTag(suggestions[activeIdx].username);
-        } else {
-          confirmTag(pendingName);
-        }
-      } else if (e.key === 'Escape') {
-        if (suggestions.length > 0) {
-          setSuggestions([]);
-          setActiveIdx(-1);
-        } else {
-          cancel();
-        }
-      }
-    },
-    [activeIdx, suggestions, pendingName, confirmTag, cancel]
   );
 
   if (!imageUrl || isVideo || isCarousel) {
@@ -157,7 +97,11 @@ export const InstagramUserTags: FC<{
           <div
             key={i}
             className="absolute"
-            style={{ left: `${tag.x * 100}%`, top: `${tag.y * 100}%`, transform: 'translate(-50%, -100%)' }}
+            style={{
+              left: `${tag.x * 100}%`,
+              top: `${tag.y * 100}%`,
+              transform: 'translate(-50%, -100%)',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="bg-white/90 text-black text-[11px] px-[6px] py-[2px] rounded flex items-center gap-[4px] whitespace-nowrap shadow">
@@ -173,67 +117,54 @@ export const InstagramUserTags: FC<{
           </div>
         ))}
 
-        {/* Pending tag input + autocomplete */}
+        {/* Pending tag input */}
         {pendingPos && (
           <div
             className="absolute z-20"
             style={{
               left: `${pendingPos.x * 100}%`,
               top: `${pendingPos.y * 100}%`,
-              transform: pendingPos.y < 0.2 ? 'translate(-50%, 8px)' : 'translate(-50%, calc(-100% - 6px))',
+              transform:
+                pendingPos.y < 0.2
+                  ? 'translate(-50%, 8px)'
+                  : 'translate(-50%, calc(-100% - 6px))',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Input row */}
             <div className="bg-newBgColorInner border border-newTableBorder rounded-[6px] px-[10px] py-[6px] shadow-xl flex items-center gap-[6px]">
               <input
                 ref={inputRef}
                 value={pendingName}
-                onChange={(e) => { setPendingName(e.target.value); setActiveIdx(-1); }}
-                onKeyDown={handleKeyDown}
-                className="bg-transparent outline-none text-[12px] w-[140px] text-textColor placeholder-textColor"
+                onChange={(e) => setPendingName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    confirm();
+                  }
+                  if (e.key === 'Escape') cancel();
+                }}
+                className="bg-transparent outline-none text-[12px] w-[120px] text-textColor placeholder-textColor"
                 placeholder="@username"
               />
-              {searching && (
-                <span className="opacity-40 text-[10px]">…</span>
-              )}
               <button
                 className="opacity-60 hover:opacity-100 text-[12px]"
-                onMouseDown={(e) => { e.preventDefault(); confirmTag(activeIdx >= 0 && suggestions[activeIdx] ? suggestions[activeIdx].username : pendingName); }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  confirm();
+                }}
               >
                 ✓
               </button>
               <button
                 className="opacity-60 hover:opacity-100 text-[12px]"
-                onMouseDown={(e) => { e.preventDefault(); cancel(); }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  cancel();
+                }}
               >
                 ✕
               </button>
             </div>
-
-            {/* Suggestions dropdown */}
-            {suggestions.length > 0 && (
-              <div className="bg-newBgColorInner border border-newTableBorder rounded-[6px] mt-[2px] shadow-xl overflow-hidden max-h-[180px] overflow-y-auto">
-                {suggestions.map((s, i) => (
-                  <div
-                    key={s.username}
-                    className={`flex items-center gap-[8px] px-[10px] py-[6px] cursor-pointer text-[12px] ${i === activeIdx ? 'bg-newTableBorder' : 'hover:bg-newTableBorder/50'}`}
-                    onMouseDown={(e) => { e.preventDefault(); confirmTag(s.username); }}
-                    onMouseEnter={() => setActiveIdx(i)}
-                  >
-                    {s.profilePic ? (
-                      <img src={s.profilePic} alt="" className="w-[24px] h-[24px] rounded-full object-cover shrink-0" />
-                    ) : (
-                      <div className="w-[24px] h-[24px] rounded-full bg-newTableBorder shrink-0" />
-                    )}
-                    <div className="flex flex-col leading-tight min-w-0">
-                      <span className="text-textColor font-medium truncate">@{s.username}</span>
-                      {s.name && <span className="text-textColor/60 truncate">{s.name}</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
       </div>

@@ -191,16 +191,6 @@ export class InstagramStandaloneProvider
     );
   }
 
-  async searchUsers(
-    token: string,
-    data: { q: string },
-    internalId?: string
-  ) {
-    return instagramProvider.searchUsers(token, data, internalId, {
-      providerIdentifier: 'instagram-standalone',
-    });
-  }
-
   async comment(
     id: string,
     postId: string,

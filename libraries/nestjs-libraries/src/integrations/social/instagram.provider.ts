@@ -1027,46 +1027,6 @@ export class InstagramProvider
     }));
   }
 
-  @Tool({
-    description: 'Search Instagram users by username for user tagging on posts',
-    dataSchema: [
-      {
-        key: 'q',
-        type: 'string',
-        description: 'Username search query (at least 2 characters)',
-      },
-    ],
-  })
-  async searchUsers(
-    token: string,
-    data: { q: string },
-    internalId?: string,
-    integration?: { providerIdentifier?: string }
-  ) {
-    const isStandalone =
-      integration?.providerIdentifier === 'instagram-standalone';
-    const type = isStandalone ? 'graph.instagram.com' : 'graph.facebook.com';
-    const [accessToken, userToken] = token.split('___');
-    const url = `https://${type}/v22.0/${internalId}/users_search?q=${encodeURIComponent(data.q)}&fields=name,username,profile_pic&access_token=${userToken || accessToken}`;
-    try {
-      const response = await fetch(url);
-      const json = await response.json();
-      if (!response.ok || json?.error) {
-        console.error('[searchUsers] API error:', JSON.stringify(json));
-        return [];
-      }
-      const users: any[] = json?.data || [];
-      return users.map((u) => ({
-        username: u.username,
-        name: u.name || '',
-        profilePic: u.profile_pic || '',
-      }));
-    } catch (err) {
-      console.error('[searchUsers] fetch error:', err);
-      return [];
-    }
-  }
-
   async postAnalytics(
     integrationId: string,
     token: string,
