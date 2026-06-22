@@ -11,6 +11,7 @@ import { useSettings } from '@gitroom/frontend/components/launches/helpers/use.v
 import { InstagramDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/instagram.dto';
 import { InstagramCollaboratorsTags } from '@gitroom/frontend/components/new-launch/providers/instagram/instagram.tags';
 import { InstagramAudioSelector } from '@gitroom/frontend/components/new-launch/providers/instagram/instagram.audio';
+import { InstagramUserTags } from '@gitroom/frontend/components/new-launch/providers/instagram/instagram.user-tags';
 import { useIntegration } from '@gitroom/frontend/components/launches/helpers/use.integration';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { InstagramPreview } from '@gitroom/frontend/components/new-launch/providers/instagram/instagram.preview';
@@ -65,6 +66,14 @@ const InstagramCollaborators: FC<{
         <InstagramCollaboratorsTags
           label="Collaborators (max 3) - accounts can't be private"
           {...register('collaborators', {
+            value: [],
+          })}
+        />
+      )}
+
+      {postCurrentType !== 'story' && (
+        <InstagramUserTags
+          {...register('user_tags', {
             value: [],
           })}
         />
