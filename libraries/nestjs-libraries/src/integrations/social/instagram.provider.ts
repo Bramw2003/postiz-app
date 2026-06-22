@@ -1048,18 +1048,22 @@ export class InstagramProvider
     const type = isStandalone ? 'graph.instagram.com' : 'graph.facebook.com';
     const version = isStandalone ? 'v21.0' : 'v22.0';
     const [accessToken, userToken] = token.split('___');
+    const url = `https://${type}/${version}/${internalId}/users_search?q=${encodeURIComponent(data.q)}&fields=name,username,profile_pic&access_token=${userToken || accessToken}`;
     try {
-      const response = await fetch(
-        `https://${type}/${version}/${internalId}/users_search?q=${encodeURIComponent(data.q)}&fields=name,username,profile_pic&access_token=${userToken || accessToken}`
-      );
+      const response = await fetch(url);
       const json = await response.json();
+      if (!response.ok || json?.error) {
+        console.error('[searchUsers] API error:', JSON.stringify(json));
+        return [];
+      }
       const users: any[] = json?.data || [];
       return users.map((u) => ({
         username: u.username,
         name: u.name || '',
         profilePic: u.profile_pic || '',
       }));
-    } catch {
+    } catch (err) {
+      console.error('[searchUsers] fetch error:', err);
       return [];
     }
   }
