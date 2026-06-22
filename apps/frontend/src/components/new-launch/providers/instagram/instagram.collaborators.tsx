@@ -12,6 +12,7 @@ import { InstagramDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-set
 import { InstagramCollaboratorsTags } from '@gitroom/frontend/components/new-launch/providers/instagram/instagram.tags';
 import { InstagramAudioSelector } from '@gitroom/frontend/components/new-launch/providers/instagram/instagram.audio';
 import { InstagramUserTags } from '@gitroom/frontend/components/new-launch/providers/instagram/instagram.user-tags';
+import { InstagramLocationSelector } from '@gitroom/frontend/components/new-launch/providers/instagram/instagram.location';
 import { useIntegration } from '@gitroom/frontend/components/launches/helpers/use.integration';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { InstagramPreview } from '@gitroom/frontend/components/new-launch/providers/instagram/instagram.preview';
@@ -76,6 +77,13 @@ const InstagramCollaborators: FC<{
           {...register('user_tags', {
             value: [],
           })}
+        />
+      )}
+
+      {postCurrentType !== 'story' && (
+        <InstagramLocationSelector
+          label="Location"
+          {...register('location')}
         />
       )}
 

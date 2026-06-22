@@ -663,6 +663,11 @@ export class InstagramProvider
               )}`
             : ``;
 
+        const locationId =
+          firstPost?.settings?.location?.id && !isCarouselItem && !isStory
+            ? `&location_id=${firstPost.settings.location.id}`
+            : ``;
+
         // audio_configuration is only supported for Reels (single video, not a story)
         // and only with Facebook Login (not Instagram Login / graph.instagram.com)
         const audioConfiguration =
@@ -688,7 +693,7 @@ export class InstagramProvider
 
         const { id: photoId } = await (
           await this.fetch(
-            `https://${type}/v20.0/${id}/media?${mediaType}${isCarousel}${collaborators}${userTags}${trialParams}${audioConfiguration}&access_token=${accessToken}${caption}`,
+            `https://${type}/v20.0/${id}/media?${mediaType}${isCarousel}${collaborators}${userTags}${locationId}${trialParams}${audioConfiguration}&access_token=${accessToken}${caption}`,
             {
               method: 'POST',
             }
@@ -1025,6 +1030,41 @@ export class InstagramProvider
       duration: audio.duration_in_ms || 0,
       previewUrl: audio.download_url || '',
     }));
+  }
+
+  @Tool({
+    description: 'Search for a location/place to tag on an Instagram post',
+    dataSchema: [
+      { key: 'q', type: 'string', description: 'Location name search query' },
+    ],
+  })
+  async locationSearch(
+    token: string,
+    data: { q: string },
+    internalId?: string,
+    integration?: { providerIdentifier?: string }
+  ) {
+    const isStandalone =
+      integration?.providerIdentifier === 'instagram-standalone';
+    const type = isStandalone ? 'graph.instagram.com' : 'graph.facebook.com';
+    const [accessToken, userToken] = token.split('___');
+    try {
+      const response = await fetch(
+        `https://${type}/v22.0/${internalId}/location_search?q=${encodeURIComponent(data.q)}&access_token=${userToken || accessToken}`
+      );
+      const json = await response.json();
+      if (!response.ok || json?.error) {
+        console.error('[locationSearch] API error:', JSON.stringify(json));
+        return [];
+      }
+      return (json?.data || []).map((l: any) => ({
+        id: l.id,
+        name: l.name,
+      }));
+    } catch (err) {
+      console.error('[locationSearch] fetch error:', err);
+      return [];
+    }
   }
 
   async postAnalytics(

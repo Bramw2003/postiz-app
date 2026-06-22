@@ -69,6 +69,16 @@ export class InstagramAudio {
   video_volume?: number;
 }
 
+export class InstagramLocation {
+  @IsDefined()
+  @IsString()
+  id: string;
+
+  @IsOptional()
+  @IsString()
+  name?: string;
+}
+
 export class InstagramDto {
   @IsIn(['post', 'story'])
   @IsDefined()
@@ -97,4 +107,9 @@ export class InstagramDto {
   @IsArray()
   @IsOptional()
   user_tags?: UserTag[];
+
+  @Type(() => InstagramLocation)
+  @ValidateNested()
+  @IsOptional()
+  location?: InstagramLocation;
 }
