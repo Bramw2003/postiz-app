@@ -1027,6 +1027,39 @@ export class InstagramProvider
     }));
   }
 
+  @Tool({
+    description: 'Search Instagram users by username for user tagging on posts',
+    dataSchema: [
+      {
+        key: 'q',
+        type: 'string',
+        description: 'Username search query (at least 2 characters)',
+      },
+    ],
+  })
+  async searchUsers(
+    token: string,
+    data: { q: string },
+    internalId?: string,
+    integration?: { providerIdentifier?: string }
+  ) {
+    const type =
+      integration?.providerIdentifier === 'instagram-standalone'
+        ? 'graph.instagram.com'
+        : 'graph.facebook.com';
+    const [accessToken, userToken] = token.split('___');
+    const { data: users = [] } = await (
+      await this.fetch(
+        `https://${type}/v22.0/${internalId}/users_search?q=${encodeURIComponent(data.q)}&fields=name,username,profile_pic&access_token=${userToken || accessToken}`
+      )
+    ).json();
+    return (users as any[]).map((u) => ({
+      username: u.username,
+      name: u.name || '',
+      profilePic: u.profile_pic || '',
+    }));
+  }
+
   async postAnalytics(
     integrationId: string,
     token: string,
