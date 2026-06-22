@@ -1046,9 +1046,8 @@ export class InstagramProvider
     const isStandalone =
       integration?.providerIdentifier === 'instagram-standalone';
     const type = isStandalone ? 'graph.instagram.com' : 'graph.facebook.com';
-    const version = isStandalone ? 'v21.0' : 'v22.0';
     const [accessToken, userToken] = token.split('___');
-    const url = `https://${type}/${version}/${internalId}/users_search?q=${encodeURIComponent(data.q)}&fields=name,username,profile_pic&access_token=${userToken || accessToken}`;
+    const url = `https://${type}/v22.0/${internalId}/users_search?q=${encodeURIComponent(data.q)}&fields=name,username,profile_pic&access_token=${userToken || accessToken}`;
     try {
       const response = await fetch(url);
       const json = await response.json();
