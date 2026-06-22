@@ -1043,21 +1043,25 @@ export class InstagramProvider
     internalId?: string,
     integration?: { providerIdentifier?: string }
   ) {
-    const type =
-      integration?.providerIdentifier === 'instagram-standalone'
-        ? 'graph.instagram.com'
-        : 'graph.facebook.com';
+    const isStandalone =
+      integration?.providerIdentifier === 'instagram-standalone';
+    const type = isStandalone ? 'graph.instagram.com' : 'graph.facebook.com';
+    const version = isStandalone ? 'v21.0' : 'v22.0';
     const [accessToken, userToken] = token.split('___');
-    const { data: users = [] } = await (
-      await this.fetch(
-        `https://${type}/v22.0/${internalId}/users_search?q=${encodeURIComponent(data.q)}&fields=name,username,profile_pic&access_token=${userToken || accessToken}`
-      )
-    ).json();
-    return (users as any[]).map((u) => ({
-      username: u.username,
-      name: u.name || '',
-      profilePic: u.profile_pic || '',
-    }));
+    try {
+      const response = await fetch(
+        `https://${type}/${version}/${internalId}/users_search?q=${encodeURIComponent(data.q)}&fields=name,username,profile_pic&access_token=${userToken || accessToken}`
+      );
+      const json = await response.json();
+      const users: any[] = json?.data || [];
+      return users.map((u) => ({
+        username: u.username,
+        name: u.name || '',
+        profilePic: u.profile_pic || '',
+      }));
+    } catch {
+      return [];
+    }
   }
 
   async postAnalytics(
