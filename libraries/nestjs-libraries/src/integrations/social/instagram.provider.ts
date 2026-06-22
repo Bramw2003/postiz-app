@@ -1044,13 +1044,15 @@ export class InstagramProvider
     internalId?: string,
     integration?: { providerIdentifier?: string }
   ) {
-    const isStandalone =
-      integration?.providerIdentifier === 'instagram-standalone';
-    const type = isStandalone ? 'graph.instagram.com' : 'graph.facebook.com';
+    // location_search only exists on graph.facebook.com (Facebook Login).
+    // graph.instagram.com (Standalone) does not expose this edge.
+    if (integration?.providerIdentifier === 'instagram-standalone') {
+      return [];
+    }
     const [accessToken, userToken] = token.split('___');
     try {
       const response = await fetch(
-        `https://${type}/v22.0/${internalId}/location_search?q=${encodeURIComponent(data.q)}&access_token=${userToken || accessToken}`
+        `https://graph.facebook.com/v22.0/${internalId}/location_search?q=${encodeURIComponent(data.q)}&access_token=${userToken || accessToken}`
       );
       const json = await response.json();
       if (!response.ok || json?.error) {

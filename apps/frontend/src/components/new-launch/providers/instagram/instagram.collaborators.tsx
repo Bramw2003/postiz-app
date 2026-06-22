@@ -45,8 +45,9 @@ const InstagramCollaborators: FC<{
   const { integration } = useIntegration();
   const postCurrentType = watch('post_type');
   const isTrialReel = watch('is_trial_reel');
-  // The Audio API is only available with Facebook Login, not Instagram Login
+  // Audio and location search APIs are only available with Facebook Login, not Instagram Login
   const supportsAudio = integration?.identifier === 'instagram';
+  const supportsLocation = integration?.identifier === 'instagram';
   return (
     <>
       <Select
@@ -80,7 +81,7 @@ const InstagramCollaborators: FC<{
         />
       )}
 
-      {postCurrentType !== 'story' && (
+      {postCurrentType !== 'story' && supportsLocation && (
         <InstagramLocationSelector
           label="Location"
           {...register('location')}
