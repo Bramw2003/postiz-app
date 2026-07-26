@@ -55,7 +55,7 @@ export class InstagramProvider
     if (firstPost.length > 10) {
       return 'Instagram carousel only supports up to 10 media attachments';
     }
-    if (settings?.is_trial_reel) {
+    if (this.assetBoolean(settings?.is_trial_reel)) {
       if ((firstPost?.length ?? 0) > 1) {
         return 'Trial Reels can only have one video';
       }
@@ -605,7 +605,7 @@ export class InstagramProvider
     const [firstPost] = postDetails;
     console.log('in progress', id);
     const isStory = firstPost.settings.post_type === 'story';
-    const isTrialReel = !!firstPost.settings.is_trial_reel;
+    const isTrialReel = this.assetBoolean(firstPost.settings.is_trial_reel);
     const medias = await Promise.all(
       firstPost?.media?.map(async (m) => {
         const caption =
@@ -702,7 +702,13 @@ export class InstagramProvider
         console.log('in progress2', id);
 
         let status = 'IN_PROGRESS';
+        let attempts = 0;
+        const maxAttempts = 18; // ~9 minutes at 30s interval
         while (status === 'IN_PROGRESS') {
+          if (attempts++ >= maxAttempts) {
+            throw new Error('Media processing timed out');
+          }
+
           const { status_code } = await (
             await this.fetch(
               `https://${type}/v20.0/${photoId}?access_token=${
@@ -797,7 +803,13 @@ export class InstagramProvider
       ).json();
 
       let status = 'IN_PROGRESS';
+      let attempts = 0;
+      const maxAttempts = 18; // ~9 minutes at 30s interval
       while (status === 'IN_PROGRESS') {
+        if (attempts++ >= maxAttempts) {
+          throw new Error('Media processing timed out');
+        }
+
         const { status_code } = await (
           await this.fetch(
             `https://${type}/v20.0/${containerId}?fields=status_code&access_token=${
@@ -1082,7 +1094,7 @@ export class InstagramProvider
     try {
       // Fetch media insights from Instagram Graph API
       const { data } = await (
-        await this.fetch(
+        await fetch(
           `https://${type}/v21.0/${postId}/insights?metric=views,reach,saved,likes,comments,shares&access_token=${accessToken}`
         )
       ).json();
