@@ -773,11 +773,11 @@ export class BlueskyProvider extends SocialAbstract implements SocialProvider {
 
     // @ts-ignore
     const parentCid = parentThread.data.thread.post?.cid;
-    // @ts-ignore
     const rootUri =
+      // @ts-ignore
       parentThread.data.thread.post?.record?.reply?.root?.uri || postId;
-    // @ts-ignore
     const rootCid =
+      // @ts-ignore
       parentThread.data.thread.post?.record?.reply?.root?.cid || parentCid;
 
     // @ts-ignore
