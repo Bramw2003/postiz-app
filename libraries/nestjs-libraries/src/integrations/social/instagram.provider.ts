@@ -1293,7 +1293,7 @@ export class InstagramProvider
     const [accessToken, userToken] = token.split('___');
     try {
       const response = await fetch(
-        `https://graph.facebook.com/v22.0/${internalId}/location_search?q=${encodeURIComponent(data.q)}&access_token=${userToken || accessToken}`
+        `https://graph.facebook.com/${META_GRAPH_API_VERSION}/${internalId}/location_search?q=${encodeURIComponent(data.q)}&access_token=${userToken || accessToken}`
       );
       const json = await response.json();
       if (!response.ok || json?.error) {
