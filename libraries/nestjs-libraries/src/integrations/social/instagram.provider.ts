@@ -120,6 +120,13 @@ export class InstagramProvider
         value: "This account doesn't support Trial Reels",
       };
     }
+    if (body.indexOf('2207078') > -1) {
+      return {
+        type: 'bad-body' as const,
+        value:
+          'Instagram Trial Reel publish limit reached for this account, please try again later or publish the post as a regular Reel',
+      };
+    }
 
     if (
       body.indexOf('REVOKED_ACCESS_TOKEN') > -1 ||
@@ -182,7 +189,8 @@ export class InstagramProvider
     if (body.indexOf('2207053') > -1) {
       return {
         type: 'bad-body' as const,
-        value: 'Unknown upload error, please try again',
+        value:
+          "Instagram failed to upload the video. If it exceeds Instagram's limits (300MB, 1920px width, 25Mbps bitrate), export a smaller version and try again",
       };
     }
 
