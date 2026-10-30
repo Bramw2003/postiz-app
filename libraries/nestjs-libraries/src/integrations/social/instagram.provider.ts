@@ -20,6 +20,7 @@ import { Integration } from '@prisma/client';
 import { Rules } from '@gitroom/nestjs-libraries/chat/rules.description.decorator';
 import { META_GRAPH_API_VERSION } from '@gitroom/nestjs-libraries/integrations/social/facebook.provider';
 import { Tool } from '@gitroom/nestjs-libraries/integrations/tool.decorator';
+import { DashboardFunction } from '@gitroom/nestjs-libraries/integrations/dashboard.function.decorator';
 import { hasExtension } from '@gitroom/helpers/utils/has.extension';
 
 @Rules(
@@ -69,6 +70,9 @@ export class InstagramProvider
       if (!hasVideo) {
         return 'Trial Reels must be a video';
       }
+    }
+    if (firstPost?.some((f) => (f?.alt?.length ?? 0) > 1000)) {
+      return 'Instagram alt text can be up to 1000 characters';
     }
     if (settings?.audio?.id) {
       if (settings?.post_type === 'story') {
@@ -196,7 +200,7 @@ export class InstagramProvider
 
     if (body.indexOf('2207052') > -1) {
       return {
-        type: 'bad-body' as const,
+        type: 'retry' as const,
         value: 'Media fetch failed, please try again',
       };
     }
@@ -383,6 +387,14 @@ export class InstagramProvider
       };
     }
 
+    if (body.indexOf('1772107') > -1) {
+      return {
+        type: 'bad-body' as const,
+        value:
+          'Instagram did not add the comment, the post itself was published. Please try again with different comment text',
+      };
+    }
+
     if (body.indexOf('2207082') > -1) {
       return {
         type: 'retry' as const,
@@ -417,6 +429,14 @@ export class InstagramProvider
       return {
         type: 'bad-body' as const,
         value: 'Unknown error, please try again later or contact support',
+      };
+    }
+
+    if (body.indexOf('2207018') > -1) {
+      return {
+        type: 'bad-body' as const,
+        value:
+          "One of the collaborators could not be tagged, please check the username is correct, the account is public, and that it allows collaborator invites",
       };
     }
 
@@ -527,6 +547,7 @@ export class InstagramProvider
     };
   }
 
+  @DashboardFunction()
   async pages(token: string) {
     const [accessToken, userToken] = token.split('___');
     const seenPageIds = new Set<string>();
@@ -674,7 +695,9 @@ export class InstagramProvider
         this.identifier,
         JSON.stringify({ status_code, status }),
         '{}',
-        handleError?.value || status || 'Instagram could not process the media'
+        handleError?.value ||
+          (status !== status_code && status) ||
+          'Instagram could not process the media'
       );
     }
 
@@ -754,6 +777,13 @@ export class InstagramProvider
           ? `image_url=${m.path}&media_type=STORIES`
           : `image_url=${m.path}`;
 
+        // alt_text is only supported on images (single or carousel item),
+        // not on videos or stories
+        const altText =
+          m.alt && !isStory && !hasExtension(m.path, 'mp4')
+            ? `&alt_text=${encodeURIComponent(m.alt)}`
+            : ``;
+
         const trialParams = isTrialReel
           ? `&trial_params=${encodeURIComponent(
               JSON.stringify({
@@ -811,7 +841,7 @@ export class InstagramProvider
 
         const { id: photoId } = await (
           await this.fetch(
-            `https://${type}/${META_GRAPH_API_VERSION}/${id}/media?${mediaType}${isCarousel}${itemCollaborators}${userTags}${locationId}${trialParams}${audioConfiguration}&access_token=${accessToken}${caption}`,
+            `https://${type}/${META_GRAPH_API_VERSION}/${id}/media?${mediaType}${altText}${isCarousel}${itemCollaborators}${userTags}${locationId}${trialParams}${audioConfiguration}&access_token=${accessToken}${caption}`,
             {
               method: 'POST',
             }
