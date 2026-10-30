@@ -48,11 +48,25 @@ export async function proxy(request: NextRequest) {
     nextUrl.pathname.startsWith('/p/') ||
     nextUrl.pathname.startsWith('/provider/') ||
     nextUrl.pathname.startsWith('/icons/') ||
+    // public pages: landing page and the legal pages
+    nextUrl.pathname === '/landing' ||
+    nextUrl.pathname === '/terms' ||
+    nextUrl.pathname === '/privacy' ||
     // the consent screen of MCP / OAuth clients handles signed-out visitors
     // itself (sign in and come back, or connect a self-hosted instance)
     nextUrl.pathname.startsWith('/oauth/authorize')
   ) {
     return topResponse;
+  }
+
+  // signed-out visitors of the bare homepage get the public landing page,
+  // anything with a query (invite links, OAuth returns) keeps its login flow
+  if (nextUrl.pathname === '/' && !authCookie && !nextUrl.search) {
+    return NextResponse.rewrite(new URL('/landing', nextUrl.href), {
+      request: {
+        headers: requestHeaders,
+      },
+    });
   }
 
   if (

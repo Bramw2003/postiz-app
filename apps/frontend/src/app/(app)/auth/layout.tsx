@@ -7,6 +7,7 @@ import { TestimonialComponent } from '@gitroom/frontend/components/auth/testimon
 import { LogoTextComponent } from '@gitroom/frontend/components/ui/logo-text.component';
 import { MantineWrapper } from '@gitroom/react/helpers/mantine.wrapper';
 import { Toaster } from '@gitroom/react/toaster/toaster';
+import { LegalLinks } from '@gitroom/frontend/components/public/public.page';
 const ReturnUrlComponent = loadDynamic(() => import('./return.url.component'));
 export default async function AuthLayout({
   children,
@@ -25,6 +26,7 @@ export default async function AuthLayout({
           <div className="w-full max-w-[440px] mx-auto justify-center gap-[20px] h-full flex flex-col text-white">
             <LogoTextComponent />
             <div className="flex">{children}</div>
+            <LegalLinks className="justify-center text-white/60" />
           </div>
         </div>
         <div className="text-[36px] flex-1 pt-[88px] hidden lg:flex flex-col items-center">
